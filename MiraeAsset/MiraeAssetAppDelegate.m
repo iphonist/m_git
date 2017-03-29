@@ -39,7 +39,7 @@
     if (![[NSFileManager defaultManager] fileExistsAtPath:filePath])
         [[NSFileManager defaultManager] createDirectoryAtPath:filePath withIntermediateDirectories:NO attributes:nil error:nil];
     
-    [[AFHTTPRequestOperationLogger sharedLogger] startLogging];
+//    [[AFHTTPRequestOperationLogger sharedLogger] startLogging];
     NSLog(@"sbusese %@",[[NSBundle mainBundle]infoDictionary][@"SBUsesNetwork"]);
     
     firstLaunch = YES;
@@ -61,16 +61,31 @@
         [self writeToPlist:@"deviceid" value:@""];
     }
     
-    if ([[[UIDevice currentDevice] systemVersion] floatValue] >= 8.0)
-    {
-        [[UIApplication sharedApplication] registerUserNotificationSettings:[UIUserNotificationSettings settingsForTypes:
-                                                                             (UIUserNotificationTypeSound | UIUserNotificationTypeAlert | UIUserNotificationTypeBadge) categories:nil]];
-        [[UIApplication sharedApplication] registerForRemoteNotifications];
+    
+    if ([[[UIDevice currentDevice] systemVersion] floatValue] >= 10.0){
+        NSLog(@"register over 10");
+        UNUserNotificationCenter *center = [UNUserNotificationCenter currentNotificationCenter];
+        center.delegate = self;
+        [center requestAuthorizationWithOptions:(UNAuthorizationOptionSound | UNAuthorizationOptionAlert | UNAuthorizationOptionBadge) completionHandler:^(BOOL granted, NSError * _Nullable error){
+            if( !error ){
+                [[UIApplication sharedApplication] registerForRemoteNotifications];
+            }
+        }];
     }
-    else
-    {
-        [[UIApplication sharedApplication] registerForRemoteNotificationTypes:
-         (UIUserNotificationTypeBadge | UIUserNotificationTypeSound | UIUserNotificationTypeAlert)];
+    else{
+        if ([[[UIDevice currentDevice] systemVersion] floatValue] >= 8.0)
+        {
+            NSLog(@"register over 8");
+            [[UIApplication sharedApplication] registerUserNotificationSettings:[UIUserNotificationSettings settingsForTypes:
+                                                                                 (UIUserNotificationTypeSound | UIUserNotificationTypeAlert | UIUserNotificationTypeBadge) categories:nil]];
+            [[UIApplication sharedApplication] registerForRemoteNotifications];
+        }
+        else
+        {
+            NSLog(@"register under 8");
+            [[UIApplication sharedApplication] registerForRemoteNotificationTypes:
+             (UIUserNotificationTypeBadge | UIUserNotificationTypeSound | UIUserNotificationTypeAlert)];
+        }
     }
 
     
@@ -95,7 +110,7 @@
     [[Countly sharedInstance] start:@"5c54802ae1926350dd7f890abc882fee8971c0b9" withHost:@"http://analytics.lemp.kr:53381"];
     [Fabric with:@[[Crashlytics class]]];
 
-    [Crashlytics startWithAPIKey:@"a0e93fdaf82dfab37e7a75f3914ff871900b7c81"];
+//    [Crashlytics startWithAPIKey:@"a0e93fdaf82dfab37e7a75f3914ff871900b7c81"];
 #ifdef DEBUG
     [Crashlytics sharedInstance].debugMode = YES;
 #endif
@@ -147,12 +162,22 @@
 - (void)application:(UIApplication *)application handleActionWithIdentifier:(NSString *)identifier forRemoteNotification:(NSDictionary *)userInfo completionHandler:(void(^)())completionHandler
 {
     //handle the actions
+    [self application:application didReceiveRemoteNotification:userInfo];
     if ([identifier isEqualToString:@"declineAction"]){
     }
     else if ([identifier isEqualToString:@"answerAction"]){
     }
 }
 #endif
+-(void)userNotificationCenter:(UNUserNotificationCenter *)center didReceiveNotificationResponse:(UNNotificationResponse *)response withCompletionHandler:(void(^)())completionHandler{
+    
+    //Called to let your app know which action was selected by the user for a given notification.
+    NSLog(@"didReceiveNotificationResponse");
+    NSLog(@"Userinfo %@",response.notification.request.content.userInfo);
+    
+    [self application:[UIApplication sharedApplication] didReceiveRemoteNotification:response.notification.request.content.userInfo];
+}
+
 
 - (void)application:(UIApplication*)application didFailToRegisterForRemoteNotificationsWithError:(NSError*)error
 {
@@ -322,15 +347,27 @@
     if ([[self readPlist:@"was"] length] < 1) {
         return;
     }
-    NSString *urlString = [NSString stringWithFormat:@"https://%@",[self readPlist:@"was"]];
-    AFHTTPClient *client = [[AFHTTPClient alloc] initWithBaseURL:[NSURL URLWithString:urlString]];
+//    NSString *urlString = [NSString stringWithFormat:@"https://%@",[self readPlist:@"was"]];
+//    AFHTTPClient *client = [[AFHTTPClient alloc] initWithBaseURL:[NSURL URLWithString:urlString]];
+    
+    NSString *urlString = [NSString stringWithFormat:@"https://%@lemp/info/setprofile.lemp",[self readPlist:@"was"]];
+    NSURL *baseUrl = [NSURL URLWithString:urlString];
+    
+    AFHTTPRequestOperationManager *client = [[AFHTTPRequestOperationManager alloc]initWithBaseURL:baseUrl];
+    client.responseSerializer = [AFHTTPResponseSerializer serializer];
+
     
     NSDictionary *parameters = @{@"uid": [self readPlist:@"myinfo"][@"uid"],
                                  @"sessionkey": [self readPlist:@"myinfo"][@"sessionkey"],
                                  @"deviceid": newToken,
                                  @"olddeviceid":[SharedFunctions getDeviceIDForParameter]};
     NSLog(@"setProfileForDeviceToken param %@",parameters);
-    NSMutableURLRequest *request = [client requestWithMethod:@"POST" path:@"/lemp/info/setprofile.lemp" parameters:parameters];
+//    NSMutableURLRequest *request = [client requestWithMethod:@"POST" path:@"/lemp/info/setprofile.lemp" parameters:parameters];
+    
+    NSError *serializationError = nil;
+    NSMutableURLRequest *request = [client.requestSerializer requestWithMethod:@"POST" URLString:[baseUrl absoluteString] parameters:parameters error:&serializationError];
+
+    
     
     [UIApplication sharedApplication].networkActivityIndicatorVisible = YES;
     AFHTTPRequestOperation *operation = [client HTTPRequestOperationWithRequest:request success:^(AFHTTPRequestOperation *operation, id responseObject) {
@@ -413,7 +450,7 @@
     } else if([key isEqualToString:@"custid"]) {
         NSString *companyCode = (NSString*)value;
         if (companyCode) {
-            [Crashlytics setUserName:companyCode];
+//            [Crashlytics setUserName:companyCode];
         }
     }
     else if([key isEqualToString:@"employeinfo"]){

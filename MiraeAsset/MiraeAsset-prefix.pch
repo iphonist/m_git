@@ -21,11 +21,12 @@
 #import <SystemConfiguration/SystemConfiguration.h>
 //#import <MobileCoreServices/MobileCoreServices.h>
 #import "MiraeAssetAppDelegate.h"
-#import "AFHTTPClient.h"
-#import "AFHTTPRequestOperation.h"
-#import "AFJSONRequestOperation.h"
-#import "AFImageRequestOperation.h"
-#import "AFHTTPRequestOperationLogger.h"
+#import "AFHTTPRequestOperationManager.h"
+//#import "AFHTTPClient.h"
+//#import "AFHTTPRequestOperation.h"
+//#import "AFJSONRequestOperation.h"
+//#import "AFImageRequestOperation.h"
+//#import "AFHTTPRequestOperationLogger.h"
 #import "JSONKit.h"
 #import "CustomUIKit.h"
 //#import "MBProgressHUD.h"

@@ -763,8 +763,16 @@ else
         
     }
 
-     AFHTTPClient *client = [[AFHTTPClient alloc] initWithBaseURL:[NSURL URLWithString:@"https://mirae.lemp.co.kr/"]];
+//     AFHTTPClient *client = [[AFHTTPClient alloc] initWithBaseURL:[NSURL URLWithString:@"https://mirae.lemp.co.kr/"]];
 
+    
+    NSString *urlString = [NSString stringWithFormat:@"https://mirae.lemp.co.kr/lemp/info/setfavorite.lemp"];
+    NSURL *baseUrl = [NSURL URLWithString:urlString];
+    
+    
+    AFHTTPRequestOperationManager *client = [[AFHTTPRequestOperationManager alloc]initWithBaseURL:baseUrl];
+    client.responseSerializer = [AFHTTPResponseSerializer serializer];
+    
     NSDictionary *parameters = @{
                                  @"type" : type,
                                  @"uid" : [ResourceLoader sharedInstance].myUID,
@@ -774,7 +782,10 @@ else
                                  };
     NSLog(@"parameter %@",parameters);
     
-    NSMutableURLRequest *request = [client requestWithMethod:@"POST" path:@"/lemp/info/setfavorite.lemp" parameters:parameters];
+//    NSMutableURLRequest *request = [client requestWithMethod:@"POST" path:@"/lemp/info/setfavorite.lemp" parameters:parameters];
+    
+    NSError *serializationError = nil;
+    NSMutableURLRequest *request = [client.requestSerializer requestWithMethod:@"POST" URLString:[baseUrl absoluteString] parameters:parameters error:&serializationError];
     [UIApplication sharedApplication].networkActivityIndicatorVisible = YES;
     
     AFHTTPRequestOperation *operation = [client HTTPRequestOperationWithRequest:request success:^(AFHTTPRequestOperation *operation, id responseObject) {

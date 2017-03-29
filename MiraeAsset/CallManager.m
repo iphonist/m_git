@@ -517,7 +517,15 @@ const char alertNumber;
     
     
     
-    AFHTTPClient *client = [[AFHTTPClient alloc] initWithBaseURL:[NSURL URLWithString:@"https://mirae.lemp.co.kr/"]];
+//    AFHTTPClient *client = [[AFHTTPClient alloc] initWithBaseURL:[NSURL URLWithString:@"https://mirae.lemp.co.kr/"]];
+    
+    NSString *urlString = [NSString stringWithFormat:@"https://mirae.lemp.co.kr/lemp/info/voipstate.lemp"];
+    NSURL *baseUrl = [NSURL URLWithString:urlString];
+    
+    AFHTTPRequestOperationManager *client = [[AFHTTPRequestOperationManager alloc]initWithBaseURL:baseUrl];
+    client.responseSerializer = [AFHTTPResponseSerializer serializer];
+
+    
     NSDictionary *param = [NSDictionary dictionaryWithObjectsAndKeys:
                            [SharedAppDelegate readPlist:@"myinfo"][@"uid"],@"uid",
                            [SharedAppDelegate readPlist:@"myinfo"][@"sessionkey"],@"sessionkey",
@@ -525,7 +533,9 @@ const char alertNumber;
     
     NSLog(@"parameter %@",param);
     
-    NSMutableURLRequest *request = [client requestWithMethod:@"POST" path:@"/lemp/info/voipstate.lemp" parametersJson:param key:@"param"];
+//    NSMutableURLRequest *request = [client requestWithMethod:@"POST" path:@"/lemp/info/voipstate.lemp" parametersJson:param key:@"param"];
+    
+    NSMutableURLRequest *request = [client.requestSerializer requestWithMethod:@"POST" URLString:[baseUrl absoluteString] parametersJson:param key:@"param"];
     
     [UIApplication sharedApplication].networkActivityIndicatorVisible = YES;
     AFHTTPRequestOperation *operation = [client HTTPRequestOperationWithRequest:request success:^(AFHTTPRequestOperation *operation, id responseObject) {
